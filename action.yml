@@ -1,5 +1,16 @@
 name: 'Get & Cache Node Dependencies'
 description: 'Get and cache dependencies for a Node.js project'
+inputs:
+  # Path to the package-lock.json file
+  package-lock-path:
+    description: 'Path to the package-lock.json file'
+    required: false
+    default: './package-lock.json'
+  # Path to the node_modules directory
+  node-modules-path:
+    description: 'Path to the node_modules directory'
+    required: false
+    default: './node_modules'
 runs:
   using: 'composite'
   steps:
@@ -9,7 +20,7 @@ runs:
         id: cache
         uses: actions/cache@v3
         with:
-          path: node_modules
+          path: ${{ inputs.node-modules-path }}
           key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
