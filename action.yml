@@ -1,11 +1,10 @@
 name: 'Get & Cache Node Dependencies'
 description: 'Get and cache dependencies for a Node.js project'
 inputs:
-  # Path to the package-lock.json file
-  package-lock-path:
-    description: 'Path to the package-lock.json file'
+  use-yarn:
+    description: 'Whether to use Yarn (v1) instead of npm'
     required: false
-    default: './package-lock.json'
+    default: 'false'
   # Path to the node_modules directory
   node-modules-path:
     description: 'Path to the node_modules directory'
@@ -16,13 +15,25 @@ runs:
   steps:
       - name: Get code
         uses: actions/checkout@v3
-      - name: Cache dependencies
+      - name: Cache dependencies NPM
+        if: ${{ inputs.use-yarn }} == 'false'
         id: cache
         uses: actions/cache@v3
         with:
           path: ${{ inputs.node-modules-path }}
           key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache.outputs.cache-hit != 'true' && ${{ inputs.use-yarn }} == 'false'
         run: npm ci
+        shell: bash
+      - name: Cache dependencies Yarn
+        if: ${{ inputs.use-yarn }} == 'true'
+        id: cache-yarn
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.node-modules-path }}
+          key: deps-node-modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Install dependencies Yarn
+        if: steps.cache-yarn.outputs.cache-hit != 'true' && ${{ inputs.use-yarn }} == 'true'
+        run: yarn install --frozen-lockfile
         shell: bash
